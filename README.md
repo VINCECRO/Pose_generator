@@ -4,35 +4,34 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-0.10+-orange)
 
-Pipeline Python d'extraction de keypoints et de métriques géométriques depuis une banque de photos de poses de référence pour artistes. Produit, pour chaque image retenue, un squelette OpenPose prêt pour ControlNet et un JSON structuré utilisable dans des prompts LLM. Composant du projet **GestureAI** — outil pédagogique de gesture drawing.
+Python pipeline for extracting keypoints and geometric metrics from a reference photo bank of human poses. For each valid image, it produces an OpenPose-style skeleton ready for ControlNet and a structured JSON usable in LLM prompts. Part of the **GestureAI** project — a gesture drawing learning tool.
 
 ---
 
 ## Pipeline
 
 ```
-Banque de photos (data/raw/)
+Photo bank (data/raw/)
          │
          ▼
 MediaPipe PoseLandmarker
-(33 landmarks corps entier)
+(33 full-body landmarks)
          │
          ▼
-Filtrage qualité (confiance > 0.8)
+Quality filter (confidence > 0.8)
          │
-    ┌────┴─────────────┐
-    ▼                  ▼
-Squelette          Métriques JSON
-OpenPose           (angles, centre de gravité,
-(data/skeletons/)   33 landmarks + llm_ready)
-    │              (data/metrics/)
-    ▼
+    ┌────┴──────────────────┐
+    ▼                       ▼
+OpenPose skeleton       Metrics JSON
+(data/skeletons/)       (angles, center of gravity,
+    │                    33 landmarks + llm_ready)
+    ▼                   (data/metrics/)
 ControlNet + Stable Diffusion
     ▼
-Dataset ML libre de droits
+Royalty-free ML dataset
 ```
 
-**Sous-pipeline visage (depuis les images filtrées) :**
+**Face sub-pipeline (from filtered images):**
 
 ```
 data/raw/
@@ -41,7 +40,7 @@ data/raw/
 FaceDetector (BlazeFace full-range)
     │
     ▼
-Recadrage tête + cou (data/faces/)
+Head + neck crop (data/faces/)
     │
     ▼
 FaceLandmarker (478 landmarks + blendshapes)
@@ -52,34 +51,34 @@ Overlays + JSON (data/face_landmarks/)
 
 ---
 
-## État d'avancement
+## Status
 
-### Terminé
+### Done
 
-- **Pipeline poses complet** — détection, filtrage qualité, rendu squelette OpenPose (fond noir 512×512 + overlay debug), extraction métriques géométriques (angles épaules/hanches, centre de gravité, type d'appui, courbe colonne), export JSON avec champ `llm_ready`
-- **Sous-pipeline visage complet** — détection et recadrage tête+cou (marges calibrées, fallback landmarks si détecteur échoue), détection 478 landmarks faciaux + 52 blendshapes, rendu tessellation + contours (overlay photo + maillage fond noir)
-- **Idempotence** — les trois scripts skippent les images déjà traitées, reprises possibles sans retraitement
-- **Suite de tests** — détection sur image réelle, calculs métriques sur landmarks connus, vérification rendu squelette
+- **Full pose pipeline** — detection, quality filtering, OpenPose skeleton rendering (black background 512×512 + debug overlay), geometric metrics extraction (shoulder/hip angles, center of gravity, support type, spine curve), JSON export with `llm_ready` field
+- **Full face sub-pipeline** — head+neck detection and cropping (calibrated margins, landmark fallback if detector fails), 478 facial landmarks + 52 blendshapes detection, tessellation + contour rendering (photo overlay + black background mesh)
+- **Idempotency** — all three scripts skip already-processed images; runs can be resumed without reprocessing
+- **Test suite** — detection on a real image, metric calculations on known landmarks, skeleton render verification
 
-### En cours
+### In progress
 
-- Constitution de la banque de photos source (`data/raw/`)
-- Validation qualitative des outputs squelettes en vue de l'usage ControlNet
+- Building the source photo bank (`data/raw/`)
+- Qualitative validation of skeleton outputs for ControlNet use
 
-### Prochaines étapes
+### Next steps
 
-1. **Génération du dataset synthétique** — conditionner Stable Diffusion via ControlNet sur les squelettes pour produire des images libres de droits à partir des poses extraites
-2. **Enrichissement des métriques** — ajouter orientations volumiques (tête, torse, bassin en 3D depuis les landmarks z) pour préparer les prompts d'entraînement
-3. **Modèle de détection spécialisé** — entraîner un modèle de reconnaissance des constructions Loomis (proportions, volumes de tête/cage thoracique/bassin) sur le dataset généré
-4. **Intégration app principale** — exposer l'analyse de pose comme service appelé par GestureAI pour annoter les poses affichées en temps réel
+1. **Synthetic dataset generation** — condition Stable Diffusion via ControlNet on the extracted skeletons to produce royalty-free images
+2. **Metrics enrichment** — add volumetric orientations (head, torso, pelvis in 3D from z landmarks) to improve training prompts
+3. **Specialized detection model** — train a Loomis construction recognition model (proportions, head/ribcage/pelvis volumes) on the generated dataset
+4. **Main app integration** — expose pose analysis as a service called by GestureAI to annotate displayed poses in real time
 
 ---
 
-## Prérequis
+## Requirements
 
 - Python 3.11+
 - [uv](https://github.com/astral-sh/uv) (`pip install uv`)
-- Pas de GPU requise — MediaPipe tourne entièrement sur CPU
+- No GPU required — MediaPipe runs entirely on CPU
 
 ---
 
@@ -91,73 +90,73 @@ cd gesture-ai-dataset
 uv sync
 ```
 
-Les modèles MediaPipe sont téléchargés automatiquement dans `models/` au premier lancement.
+MediaPipe models are downloaded automatically into `models/` on first run.
 
 ---
 
 ## Usage
 
-Placez vos images de référence dans `data/raw/`, puis lancez les trois étapes dans l'ordre :
+Place your reference images in `data/raw/`, then run the three steps in order:
 
-### 1. Pipeline poses
+### 1. Pose pipeline
 
 ```bash
-# Traiter toutes les images dans data/raw/
+# Process all images in data/raw/
 uv run python scripts/run_pipeline.py
 
 # Options
-uv run python scripts/run_pipeline.py --confidence 0.85   # seuil de confiance (défaut 0.8)
-uv run python scripts/run_pipeline.py --quiet             # sans barre de progression
-uv run python scripts/run_pipeline.py --input /chemin/vers/images
+uv run python scripts/run_pipeline.py --confidence 0.85   # confidence threshold (default 0.8)
+uv run python scripts/run_pipeline.py --quiet             # no progress bar
+uv run python scripts/run_pipeline.py --input /path/to/images
 ```
 
-| Option | Défaut | Description |
+| Option | Default | Description |
 |---|---|---|
-| `--input` | `data/raw` | Dossier source des images |
-| `--skeletons` | `data/skeletons` | Dossier de sortie squelettes |
-| `--metrics` | `data/metrics` | Dossier de sortie métriques JSON |
-| `--filtered` | `data/filtered` | Images retenues copiées ici |
-| `--confidence` | `0.8` | Seuil de confiance MediaPipe (0.0–1.0) |
-| `--quiet` | — | Désactive la barre de progression |
+| `--input` | `data/raw` | Source image folder |
+| `--skeletons` | `data/skeletons` | Skeleton output folder |
+| `--metrics` | `data/metrics` | Metrics JSON output folder |
+| `--filtered` | `data/filtered` | Retained images copied here |
+| `--confidence` | `0.8` | MediaPipe confidence threshold (0.0–1.0) |
+| `--quiet` | — | Disable progress bar |
 
-### 2. Recadrage visages
+### 2. Face cropping
 
 ```bash
 uv run python scripts/run_face_crop.py                    # data/raw/ → data/faces/
-uv run python scripts/run_face_crop.py --confidence 0.3   # seuil détection (défaut)
-uv run python scripts/run_face_crop.py --debug            # sauvegarde les bounding boxes
+uv run python scripts/run_face_crop.py --confidence 0.3   # detection threshold (default)
+uv run python scripts/run_face_crop.py --debug            # save bounding boxes
 ```
 
-### 3. Landmarks faciaux
+### 3. Face landmarks
 
 ```bash
 uv run python scripts/run_face_landmarks.py               # data/faces/ → data/face_landmarks/
-uv run python scripts/run_face_landmarks.py --no-json     # overlays uniquement, sans JSON
+uv run python scripts/run_face_landmarks.py --no-json     # overlays only, no JSON
 ```
 
-Les trois scripts sont **idempotents** — relancer ne retraite pas les fichiers déjà produits.
+All three scripts are **idempotent** — re-running does not reprocess already produced files.
 
 ---
 
-## Structure des outputs
+## Output structure
 
 ```
 data/
-├── filtered/                      ← images retenues (confiance > 0.8)
+├── filtered/                         ← retained images (confidence > 0.8)
 ├── skeletons/
-│   ├── pose_001.png               ← squelette OpenPose, fond noir 512×512 (ControlNet)
-│   └── pose_001_overlay.png       ← squelette superposé à la photo (debug)
+│   ├── pose_001.png                  ← OpenPose skeleton, black background 512×512 (ControlNet)
+│   └── pose_001_overlay.png          ← skeleton overlaid on photo (debug)
 ├── metrics/
-│   └── pose_001.json              ← métriques + 33 landmarks + champ llm_ready
+│   └── pose_001.json                 ← metrics + 33 landmarks + llm_ready field
 ├── faces/
-│   └── pose_001_face0.jpg         ← recadrage tête+cou
+│   └── pose_001_face0.jpg            ← head + neck crop
 └── face_landmarks/
-    ├── pose_001_face0_face.json      ← 478 landmarks + 52 blendshapes
-    ├── pose_001_face0_face_overlay.png  ← landmarks sur photo
-    └── pose_001_face0_face_mesh.png     ← maillage sur fond noir 512×512
+    ├── pose_001_face0_face.json         ← 478 landmarks + 52 blendshapes
+    ├── pose_001_face0_face_overlay.png  ← landmarks drawn on photo
+    └── pose_001_face0_face_mesh.png     ← mesh on black background 512×512
 ```
 
-### Format métriques JSON
+### Metrics JSON format
 
 ```json
 {
@@ -170,7 +169,7 @@ data/
   "landmarks": {
     "nose":          { "x": 0.583, "y": 0.194, "z": -0.446, "visibility": 0.9999, "x_px": 891, "y_px": 399 },
     "shoulder_left": { "x": 0.743, "y": 0.308, "z": -0.216, "visibility": 0.9999, "x_px": 1135, "y_px": 631 },
-    "...": "33 landmarks au total"
+    "...": "33 landmarks total"
   },
   "metrics": {
     "shoulder_angle": -8.3,
@@ -192,11 +191,11 @@ data/
 }
 ```
 
-Le champ `llm_ready` est une version condensée directement injectable dans un prompt LLM (Groq, Claude, etc.) pour générer des descriptions de poses ou tester des systèmes d'analyse gestuelle.
+The `llm_ready` field is a condensed version directly injectable into an LLM prompt (Groq, Claude, etc.) to generate pose descriptions or test gesture analysis systems.
 
 ---
 
-## Lancer les tests
+## Running tests
 
 ```bash
 uv run pytest tests/ -v
@@ -204,14 +203,14 @@ uv run pytest tests/ -v
 
 ---
 
-## Images source
+## Source images
 
-Le dossier `data/raw/` n'est pas inclus dans ce dépôt. Placez-y vos propres photos de poses de référence avant de lancer le pipeline. Vérifiez les licences applicables avant tout usage.
+The `data/raw/` folder is not included in this repository. Place your own reference pose photos there before running the pipeline. Check applicable licenses before using images from third-party sources.
 
 ---
 
-## Licence
+## License
 
-MIT — voir [LICENSE](LICENSE) pour le code source.
+MIT — see [LICENSE](LICENSE) for the source code.
 
-Les images de poses de référence ne sont pas distribuées avec ce projet.
+Reference pose images are not distributed with this project.
