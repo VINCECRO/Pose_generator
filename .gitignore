@@ -1,0 +1,30 @@
+# Ce fichier — instructions privées du projet
+CLAUDE.md
+
+# Scraper — usage privé uniquement, ne pas publier
+src/dataset_builder/scraper.py
+scripts/scrape_sketchdaily.py
+
+# Images source et dérivées — non committées
+data/raw/
+data/filtered/
+data/faces/
+
+# Outputs — régénérables, trop lourds pour git
+data/skeletons/
+data/metrics/
+data/face_landmarks/
+
+# Logs générés à l'exécution
+download.log
+
+# Modèles MediaPipe — téléchargés automatiquement au premier lancement
+models/
+
+# Python
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+dist/
+*.egg-info/

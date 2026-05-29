@@ -1,0 +1,24 @@
+[project]
+name = "gesture-ai-dataset"
+version = "0.1.0"
+description = "Pipeline d'extraction de keypoints et génération de squelettes OpenPose depuis une banque de poses de référence"
+requires-python = ">=3.11"
+dependencies = [
+    "mediapipe>=0.10",
+    "opencv-python>=4.8",
+    "Pillow>=10.0",
+    "numpy>=1.24",
+    "tqdm>=4.65",
+    "requests>=2.31",
+    "playwright>=1.40",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dataset_builder"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
