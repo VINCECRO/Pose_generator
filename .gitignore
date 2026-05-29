@@ -5,15 +5,21 @@ CLAUDE.md
 src/dataset_builder/scraper.py
 scripts/scrape_sketchdaily.py
 
-# Images source et dérivées — non committées
-data/raw/
-data/filtered/
-data/faces/
+# Images source et dérivées — contenu ignoré, structure conservée
+data/raw/*
+data/filtered/*
+data/faces/*
+!data/raw/.gitkeep
+!data/filtered/.gitkeep
+!data/faces/.gitkeep
 
 # Outputs — régénérables, trop lourds pour git
-data/skeletons/
-data/metrics/
-data/face_landmarks/
+data/skeletons/*
+data/metrics/*
+data/face_landmarks/*
+!data/skeletons/.gitkeep
+!data/metrics/.gitkeep
+!data/face_landmarks/.gitkeep
 
 # Logs générés à l'exécution
 download.log
